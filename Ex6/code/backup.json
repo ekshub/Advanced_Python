@@ -1,0 +1,18 @@
+{
+    "djhudad": {
+        "email": "hjukd@jdjah.com",
+        "password": "$2b$12$AcJWwO2qhgzs9NomgiiDhunFdrIYtYYVD0iLIk9mUDu/B1yAu8SsW"
+    },
+    "test1": {
+        "email": "123@nankai.com",
+        "password": "$2b$12$o5e3UedYV7D5ZFmhTFr8BeRwFlHNWuUL89l1uLYJRQfPSJnBmScti"
+    },
+    "test2": {
+        "email": "kdjiaf@nankai.edu.cn",
+        "password": "$2b$12$m4a9EA.7VURb7WRhd/.ZqeeFX0pWZWLa28xDi7/vZxwTOg1KSqvUy"
+    },
+    "test3": {
+        "email": "1231@nankai.edu.cn",
+        "password": "$2b$12$17MEC5K8q98I8uOIpx7WG.Yo3aYYUzOixdbA9EcL2BWVIa3D2w3xe"
+    }
+}

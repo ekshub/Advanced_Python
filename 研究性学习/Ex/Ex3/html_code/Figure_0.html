@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>PyTorch 与 MindSpore 特点对比</title>
+    <style>
+        /* 样式设置 */
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        svg {
+            background-color: #f9f9f9;
+        }
+        .bar {
+            cursor: pointer;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: left;
+            width: auto;
+            max-width: 300px;
+            padding: 10px;
+            font: 14px sans-serif;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 0;
+            border-radius: 4px;
+            pointer-events: none;
+            line-height: 1.5em;
+        }
+        .axis-label {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .legend text {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h2>PyTorch 与 MindSpore 特点对比</h2>
+    <!-- SVG 容器 -->
+    <svg width="900" height="500"></svg>
+
+    <!-- 引入 D3.js 库 -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script>
+        // 定义数据
+        const data = [
+            {
+                feature: "易于调试和开发",
+                PyTorch: 9,
+                MindSpore: 8,
+                description: "PyTorch 的动态计算图使得模型构建和调试直观，支持快速迭代。MindSpore 支持动静态图切换，提供灵活的开发体验。"
+            },
+            {
+                feature: "生态系统",
+                PyTorch: 9,
+                MindSpore: 7,
+                description: "PyTorch 拥有强大的社区和丰富的第三方库（如 torchvision、torchtext），处理 CV 和 NLP 任务便利性高。MindSpore 的生态系统正在快速发展中。"
+            },
+            {
+                feature: "硬件性能优化",
+                PyTorch: 8,
+                MindSpore: 9,
+                description: "PyTorch 对 CUDA 和 GPU 有良好支持。MindSpore 针对华为 Ascend 处理器进行了深度优化，在华为硬件上性能提升显著，特别是在大规模并行计算时。"
+            },
+            {
+                feature: "动静态图灵活性",
+                PyTorch: 9,
+                MindSpore: 8,
+                description: "PyTorch 使用动态图机制，灵活性高。MindSpore 支持动态图和静态图的切换，可根据需求进行优化，适应多样化的开发环境。"
+            }
+        ];
+
+        // 设置 SVG 画布的宽高和边距
+        const svg = d3.select("svg"),
+              margin = {top: 60, right: 20, bottom: 100, left: 60},
+              width = +svg.attr("width") - margin.left - margin.right,
+              height = +svg.attr("height") - margin.top - margin.bottom;
+
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // 定义 x 轴
+        const x0 = d3.scaleBand()
+            .domain(data.map(d => d.feature))
+            .rangeRound([0, width])
+            .paddingInner(0.1);
+
+        const x1 = d3.scaleBand()
+            .domain(["PyTorch", "MindSpore"])
+            .rangeRound([0, x0.bandwidth()])
+            .padding(0.05);
+
+        // 定义 y 轴
+        const y = d3.scaleLinear()
+            .domain([0, 10])
+            .rangeRound([height, 0]);
+
+        // 定义颜色比例尺
+        const color = d3.scaleOrdinal()
+            .domain(["PyTorch", "MindSpore"])
+            .range(["#1f77b4", "#ff7f0e"]);
+
+        // 添加 x 轴
+        g.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x0))
+            .selectAll("text")
+            .attr("dx", "-0.8em")
+            .attr("dy", "0.15em")
+            .attr("transform", "rotate(-40)")
+            .style("text-anchor", "end")
+            .style("font-size", "12px");
+
+        // 添加 y 轴
+        g.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(y).ticks(10))
+            .append("text")
+            .attr("class", "axis-label")
+            .attr("x", -50)
+            .attr("y", -20)
+            .attr("fill", "#000")
+            .text("评分");
+
+        // 添加条形图
+        const bars = g.selectAll(".bar-group")
+            .data(data)
+            .enter().append("g")
+            .attr("class", "bar-group")
+            .attr("transform", d => `translate(${x0(d.feature)},0)`);
+
+        bars.selectAll(".bar")
+            .data(d => ["PyTorch", "MindSpore"].map(key => ({key: key, value: d[key], description: d.description})))
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => x1(d.key))
+            .attr("y", d => y(d.value))
+            .attr("width", x1.bandwidth())
+            .attr("height", d => height - y(d.value))
+            .attr("fill", d => color(d.key))
+            .on("mouseover", function(event, d) {
+                tooltip.style("display", "block")
+                    .html(`<strong>${d.key}</strong><br>评分：${d.value}<br>${d.description}`)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mousemove", function(event) {
+                tooltip.style("left", (event.pageX + 15) + "px")
+                       .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                tooltip.style("display", "none");
+            });
+
+        // 添加图例
+        const legend = g.append("g")
+            .attr("font-size", 14)
+            .attr("text-anchor", "end")
+            .attr("transform", `translate(${width},0)`)
+            .selectAll("g")
+            .data(["PyTorch", "MindSpore"])
+            .enter().append("g")
+            .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+        legend.append("rect")
+            .attr("x", -19)
+            .attr("width", 19)
+            .attr("height", 19)
+            .attr("fill", color);
+
+        legend.append("text")
+            .attr("x", -24)
+            .attr("y", 9.5)
+            .attr("dy", "0.32em")
+            .text(d => d);
+
+        // 添加工具提示
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("display", "none");
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+Electricity_720_96_SparseTSF_custom_ftM_sl720_pl96_linear_test_0_seed2023  
+mse:0.13854464888572693, mae:0.23323090374469757, rse:0.3699463903903961
+
+Electricity_720_192_SparseTSF_custom_ftM_sl720_pl192_linear_test_0_seed2023  
+mse:0.15100744366645813, mae:0.2447156012058258, rse:0.3863683342933655
+
+Electricity_720_336_SparseTSF_custom_ftM_sl720_pl336_linear_test_0_seed2023  
+mse:0.16605496406555176, mae:0.2599561810493469, rse:0.405571311712265
+
+Electricity_720_720_SparseTSF_custom_ftM_sl720_pl720_linear_test_0_seed2023  
+mse:0.20650066435337067, mae:0.2969335913658142, rse:0.4533025026321411

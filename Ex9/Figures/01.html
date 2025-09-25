@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+    <title>Ablation Study Bar Chart</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f9f9f9;
+            margin: 20px;
+        }
+        .axis path,
+        .axis line {
+            shape-rendering: crispEdges;
+            stroke: #aaa;
+            fill: none;
+        }
+        .bar {
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+        .bar:hover {
+            opacity: 1;
+        }
+        .xlabel, .ylabel, .chart-title {
+            font-size: 14px;
+            fill: #333;
+        }
+        .chart-title {
+            font-weight: bold;
+        }
+        .legend rect {
+            stroke: #ccc;
+            shape-rendering: crispEdges;
+        }
+        .legend text {
+            font-size: 12px;
+            fill: #333;
+        }
+    </style>
+</head>
+<body>
+
+<svg id="chart" viewBox="0 0 800 400"></svg>
+
+<script>
+// 原始数据（缩写模型名以简洁显示）
+const data = [
+  { model: "Full", train: 0.1492, val: 0.2183, test: 0.2045 },
+  { model: "-Bias", train: 0.1686, val: 0.2404, test: 0.2317 },
+  { model: "-StepEmb", train: 0.1476, val: 0.2223, test: 0.2054 },
+  { model: "-SpatialMLP", train: 0.1543, val: 0.1906, test: 0.1772 },
+  { model: "-TCN", train: 0.1471, val: 0.2343, test: 0.2025 },
+  { model: "-FinalConv", train: 0.4911, val: 0.6276, test: 0.5528 },
+  { model: "Basic", train: 0.2100, val: 0.3140, test: 0.2822 }
+];
+
+const subgroups = ["train", "val", "test"];
+const margin = {top: 60, right: 30, bottom: 50, left: 60};
+const width = 800 - margin.left - margin.right;
+const height = 400 - margin.top - margin.bottom;
+
+const svg = d3.select("#chart")
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
+
+// 定义 X 轴（模型）
+const x0 = d3.scaleBand()
+    .domain(data.map(d => d.model))
+    .range([0, width])
+    .paddingInner(0.2);
+
+// 定义子分类的 X 轴（训练、验证、测试条形在组内的分布）
+const x1 = d3.scaleBand()
+    .domain(subgroups)
+    .range([0, x0.bandwidth()])
+    .padding(0.1);
+
+// 定义 Y 轴（损失值）
+const y = d3.scaleLinear()
+    .domain([0, d3.max(data, d => Math.max(d.train, d.val, d.test))])
+    .nice()
+    .range([height, 0]);
+
+// 定义颜色
+const color = d3.scaleOrdinal()
+    .domain(subgroups)
+    .range(["#1f77b4", "#ff7f0e", "#2ca02c"]);
+
+// 绘制 X 轴
+svg.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x0));
+
+// 绘制 Y 轴
+svg.append("g")
+    .attr("class", "axis")
+    .call(d3.axisLeft(y));
+
+// 添加 Y 轴标签
+svg.append("text")
+    .attr("class", "ylabel")
+    .attr("x", -height/2)
+    .attr("y", -margin.left+15)
+    .attr("transform", "rotate(-90)")
+    .attr("text-anchor", "middle")
+    .text("Loss");
+
+// 添加标题
+svg.append("text")
+    .attr("class", "chart-title")
+    .attr("x", width/2)
+    .attr("y", -20)
+    .attr("text-anchor", "middle")
+    .text("Ablation Study Results");
+
+// 添加图例
+const legend = svg.selectAll(".legend")
+  .data(subgroups)
+  .enter().append("g")
+    .attr("transform", (d,i) => `translate(${i * 80}, -35)`);
+
+legend.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", d => color(d));
+
+legend.append("text")
+    .attr("x", 20)
+    .attr("y", 12)
+    .text(d => d.charAt(0).toUpperCase() + d.slice(1));
+
+// 绘制条形图
+svg.append("g")
+  .selectAll("g")
+  .data(data)
+  .enter().append("g")
+    .attr("transform", d => `translate(${x0(d.model)},0)`)
+  .selectAll("rect")
+  .data(d => subgroups.map(key => ({key: key, value: d[key]})))
+  .enter().append("rect")
+    .attr("class", "bar")
+    .attr("x", d => x1(d.key))
+    .attr("y", d => y(d.value))
+    .attr("width", x1.bandwidth())
+    .attr("height", d => height - y(d.value))
+    .attr("fill", d => color(d.key))
+    .append("title")
+    .text(d => `${d.key}: ${d.value.toFixed(4)}`);
+
+</script>
+</body>
+</html>
+ody>
+</html>

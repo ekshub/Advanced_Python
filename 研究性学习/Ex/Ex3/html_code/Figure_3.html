@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MindSpore 模块、类和函数关系径向树图</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        svg {
+            display: block;
+            margin: auto;
+            background-color: #fff;
+        }
+
+        text {
+            font-size: 10px;
+            fill: #333;
+        }
+
+        .link {
+            fill: none;
+            stroke: #ccc;
+        }
+
+        .node circle {
+            fill: steelblue;
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .node text {
+            pointer-events: none;
+            text-anchor: middle;
+        }
+
+        .node--internal circle {
+            fill: #555;
+        }
+
+        .node--leaf circle {
+            fill: #999;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: auto;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h2 style="text-align:center;">MindSpore 模块、类和函数关系径向树图</h2>
+    <!-- 创建一个用于放置图表的容器 -->
+    <div id="chart"></div>
+
+    <!-- 引入 D3.js 库 -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script>
+       const data = {
+    "name": "PyTorch",
+    "children": [
+        {
+            "name": "nn",
+            "children": [
+                {
+                    "name": "Module",
+                    "children": [
+                        {"name": "Sequential"},
+                        {"name": "ModuleList"},
+                        {"name": "Parameter"},
+                        {"name": "Linear"},
+                        {"name": "Conv2d"},
+                        {"name": "BatchNorm2d"},
+                        {"name": "ReLU"},
+                        {"name": "Dropout"},
+                        {"name": "LSTM"}, // 新增 LSTM
+                        {"name": "GRU"}, // 新增 GRU
+                        {"name": "Embedding"}, // 新增 Embedding
+                        {"name": "Transformer"}, // 新增 Transformer
+                        // ... 添加更多子类或函数
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "optim",
+            "children": [
+                {"name": "SGD"},
+                {"name": "Adam"},
+                {"name": "AdamW"},
+                {"name": "RMSprop"},
+                {"name": "Adagrad"},
+                {"name": "SparseAdam"},
+                {"name": "ASGD"},
+                {"name": "LBFGS"}, // 新增 LBFGS
+                {"name": "Adamax"}, // 新增 Adamax
+                // ... 添加更多优化器
+            ]
+        },
+        {
+            "name": "autograd",
+            "children": [
+                {"name": "backward"},
+                {"name": "grad"},
+                {"name": "no_grad"},
+                {"name": "enable_grad"},
+                {"name": "set_detect_anomaly"}, // 新增 set_detect_anomaly
+                {"name": "grad_mode"}, // 新增 grad_mode
+                // ... 添加更多自动求导工具
+            ]
+        },
+        {
+            "name": "data",
+            "children": [
+                {"name": "Dataset"},
+                {"name": "DataLoader"},
+                {"name": "TensorDataset"},
+                {"name": "ConcatDataset"},
+                {"name": "RandomSampler"},
+                {"name": "BatchSampler"},
+                {"name": "Subset"},
+                {"name": "DistributedSampler"}, // 新增 DistributedSampler
+                {"name": "IterableDataset"}, // 新增 IterableDataset
+                // ... 添加更多数据集和采样器
+            ]
+        },
+        {
+            "name": "torch",
+            "children": [
+                {"name": "Tensor"},
+                {"name": "device"},
+                {"name": "save"},
+                {"name": "load"},
+                {"name": "manual_seed"},
+                {"name": "cuda",
+                    "children": [
+                        {"name": "is_available"},
+                        {"name": "device_count"},
+                        {"name": "set_device"},
+                        {"name": "get_device_name"},
+                        // ... 添加更多 CUDA 相关函数
+                    ]
+                },
+                {"name": "distributed",
+                    "children": [
+                        {"name": "init_process_group"},
+                        {"name": "all_reduce"},
+                        {"name": "broadcast"},
+                        {"name": "all_gather"},
+                        {"name": "reduce"}, // 新增 reduce
+                        {"name": "barrier"}, // 新增 barrier
+                        // ... 添加更多分布式工具
+                    ]
+                },
+                // ... 添加更多核心工具
+            ]
+        },
+        {
+            "name": "functional",
+            "children": [
+                {"name": "relu"},
+                {"name": "sigmoid"},
+                {"name": "softmax"},
+                {"name": "log_softmax"},
+                {"name": "tanh"},
+                {"name": "dropout"},
+                {"name": "batch_norm"},
+                {"name": "conv2d"},
+                {"name": "linear"},
+                {"name": "embedding"},
+                {"name": "normalize"}, // 新增 normalize
+                {"name": "interpolate"}, // 新增 interpolate
+                // ... 添加更多函数式 API
+            ]
+        },
+        {
+            "name": "utils",
+            "children": [
+                {"name": "data",
+                    "children": [
+                        {"name": "collate_fn"},
+                        {"name": "pin_memory"},
+                        {"name": "default_collate"},
+                        {"name": "default_convert"},
+                        // ... 添加更多数据工具
+                    ]
+                },
+                {"name": "checkpoint"},
+                {"name": "model_zoo", 
+                    "children": [
+                        {"name": "load_url"},
+                        {"name": "load_state_dict_from_url"},
+                        // ... 添加更多模型工具
+                    ]
+                },
+                // ... 添加更多实用工具
+            ]
+        },
+        {
+            "name": "jit",
+            "children": [
+                {"name": "script"},
+                {"name": "trace"},
+                {"name": "save"},
+                {"name": "load"},
+                {"name": "optimize_for_inference"}, // 新增 optimize_for_inference
+                // ... 添加更多 JIT 工具
+            ]
+        },
+        {
+            "name": "distributed",
+            "children": [
+                {"name": "rpc"},
+                {"name": "autograd"},
+                {"name": "distributed_c10d"},
+                // ... 添加更多分布式功能
+            ]
+        },
+        // ... 添加更多模块
+    ]
+};
+
+
+
+        // 参考您的代码，绘制径向树图
+
+        // 指定图表的尺寸
+        const width = 1000;
+        const height = 1000;
+        const radius = width / 2;
+
+        // 创建径向树布局
+        const tree = d3.tree()
+            .size([2 * Math.PI, radius - 50])
+            .separation((a, b) => (a.parent == b.parent ? 0.5 : 1) / a.depth);
+
+        // 将数据转换为层次结构
+        const root = tree(d3.hierarchy(data));
+
+        // 创建 SVG 容器
+        const svg = d3.select("#chart").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .style("font", "10px sans-serif")
+            .attr("viewBox", [-width / 2, -height / 2, width, height]);
+
+        // 绘制链接（边）
+        svg.append("g")
+            .selectAll("path")
+            .data(root.links())
+            .join("path")
+            .attr("class", "link")
+            .attr("d", d3.linkRadial()
+                .angle(d => d.x)
+                .radius(d => d.y));
+
+        // 绘制节点
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `
+                rotate(${d.x * 180 / Math.PI - 90})
+                translate(${d.y},0)
+            `);
+
+        node.append("circle")
+            .attr("fill", d => d.children ? "#555" : "#999")
+            .attr("r", 4);
+
+        node.append("text")
+            .attr("dy", "0.31em")
+            .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
+            .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
+            .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
+            .text(d => d.data.name)
+            .clone(true).lower()
+            .attr("stroke", "white");
+
+    </script>
+</body>
+
+</html>

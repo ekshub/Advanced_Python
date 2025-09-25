@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>深度学习框架评分雷达图</title>
+    <!-- 引入 D3.js 库 -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <!-- 引入雷达图的样式 -->
+    <style>
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        svg {
+            display: block;
+            margin: auto;
+            background-color: #fff;
+        }
+        .axis line {
+            stroke: #bbb;
+        }
+        .axis text {
+            font-size: 12px;
+            fill: #555;
+        }
+        .legend {
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+        }
+        .gridCircle {
+            fill: none;
+            stroke: #ddd;
+        }
+        .labels {
+            font-size: 12px;
+            fill: #555;
+        }
+        .radarArea {
+            fill-opacity: 0.1;
+        }
+        .radarStroke {
+            stroke-width: 2px;
+            fill: none;
+        }
+        .radarCircle {
+            fill-opacity: 0.8;
+        }
+        .tooltip {
+            opacity: 0;
+            position: absolute;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 5px;
+            pointer-events: none;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">深度学习框架评分雷达图</h2>
+    <!-- 创建一个用于放置图表的容器 -->
+    <div id="radarChart"></div>
+
+    <script>
+        // 数据定义
+        const data = [
+    {framework: "PyTorch", scores: [
+        {axis: "易用性", value: 9},
+        {axis: "性能", value: 8},
+        {axis: "灵活性", value: 9},
+        {axis: "社区支持", value: 9},
+        {axis: "部署支持", value: 8},
+        {axis: "调试工具", value: 9},
+        {axis: "分布式支持", value: 8},
+        {axis: "硬件支持", value: 8},
+        {axis: "文档", value: 9},
+        {axis: "预训练模型", value: 9},
+        {axis: "多语言", value: 8},
+        {axis: "开源许可", value: 10},
+        {axis: "动态图支持", value: 9},
+        {axis: "工具集成", value: 8},
+        {axis: "兼容性", value: 8},
+        {axis: "平台支持", value: 9}
+    ]},
+    {framework: "TensorFlow", scores: [
+        {axis: "易用性", value: 8},
+        {axis: "性能", value: 9},
+        {axis: "灵活性", value: 8},
+        {axis: "社区支持", value: 10},
+        {axis: "部署支持", value: 10},
+        {axis: "调试工具", value: 9},
+        {axis: "分布式支持", value: 9},
+        {axis: "硬件支持", value: 10},
+        {axis: "文档", value: 9},
+        {axis: "预训练模型", value: 9},
+        {axis: "多语言", value: 9},
+        {axis: "开源许可", value: 10},
+        {axis: "动态图支持", value: 8},
+        {axis: "工具集成", value: 10},
+        {axis: "兼容性", value: 8},
+        {axis: "平台支持", value: 9}
+    ]},
+    {framework: "MindSpore", scores: [
+        {axis: "易用性", value: 7},
+        {axis: "性能", value: 8},
+        {axis: "灵活性", value: 8},
+        {axis: "社区支持", value: 7},
+        {axis: "部署支持", value: 8},
+        {axis: "调试工具", value: 8},
+        {axis: "分布式支持", value: 8},
+        {axis: "硬件支持", value: 9},
+        {axis: "文档", value: 8},
+        {axis: "预训练模型", value: 7},
+        {axis: "多语言", value: 7},
+        {axis: "开源许可", value: 10},
+        {axis: "动态图支持", value: 9},
+        {axis: "工具集成", value: 7},
+        {axis: "兼容性", value: 7},
+        {axis: "平台支持", value: 7}
+    ]}
+];
+
+
+        // 配置雷达图的尺寸和半径
+        const width = 600;
+        const height = 600;
+        const margin = {top: 100, right: 100, bottom: 100, left: 100};
+        const radarRadius = Math.min(width / 2, height / 2) - Math.max(margin.top, margin.bottom);
+
+        const allAxis = data[0].scores.map(d => d.axis); // 特征名称
+        const totalAxes = allAxis.length; // 特征总数
+        const angleSlice = Math.PI * 2 / totalAxes; // 每个特征之间的角度
+        const maxValue = 10; // 最大值
+
+        // 配色方案
+        const color = d3.scaleOrdinal()
+            .domain(data.map(d => d.framework))
+            .range(["#EDC951","#CC333F","#00A0B0"]);
+
+        // 创建 SVG 容器
+        const svg = d3.select("#radarChart").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // 创建图表组
+        const g = svg.append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // 绘制环形网格
+        const levels = 5; // 网格层数
+        for(let level = 0; level < levels; level++) {
+            const radius = radarRadius / levels * (level + 1);
+            g.append("circle")
+                .attr("class", "gridCircle")
+                .attr("r", radius)
+                .style("fill", "#fff")
+                .style("stroke", "#ddd");
+        }
+
+        // 添加轴线和特征标签
+        const axis = g.selectAll(".axis")
+            .data(allAxis)
+            .enter()
+            .append("g")
+            .attr("class", "axis");
+
+        axis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", (d, i) => radarRadius * Math.cos(angleSlice * i - Math.PI / 2))
+            .attr("y2", (d, i) => radarRadius * Math.sin(angleSlice * i - Math.PI / 2))
+            .attr("stroke", "#bbb")
+            .attr("stroke-width", "1px");
+
+        axis.append("text")
+            .attr("class", "labels")
+            .attr("x", (d, i) => (radarRadius + 20) * Math.cos(angleSlice * i - Math.PI / 2))
+            .attr("y", (d, i) => (radarRadius + 20) * Math.sin(angleSlice * i - Math.PI / 2))
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .text(d => d);
+
+        // 雷达线生成器
+        const radarLine = d3.lineRadial()
+            .curve(d3.curveLinearClosed)
+            .radius(d => d.value / maxValue * radarRadius)
+            .angle((d, i) => i * angleSlice);
+
+        // 创建一个用于显示提示信息的 div
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip");
+
+        // 绘制雷达区域和边界
+        data.forEach((d, i) => {
+            // 绘制雷达区域
+            g.append("path")
+                .datum(d.scores)
+                .attr("class", "radarArea")
+                .attr("d", radarLine)
+                .style("fill", color(d.framework))
+                .style("fill-opacity", 0.1);
+
+            // 绘制雷达边界
+            g.append("path")
+                .datum(d.scores)
+                .attr("class", "radarStroke")
+                .attr("d", radarLine)
+                .style("stroke-width", 2)
+                .style("stroke", color(d.framework));
+
+            // 绘制数据点
+            g.selectAll(`.radarCircle_${i}`)
+                .data(d.scores)
+                .enter()
+                .append("circle")
+                .attr("class", `radarCircle_${i}`)
+                .attr("r", 4)
+                .attr("cx", (d, i) => (d.value / maxValue * radarRadius) * Math.cos(angleSlice * i - Math.PI / 2))
+                .attr("cy", (d, i) => (d.value / maxValue * radarRadius) * Math.sin(angleSlice * i - Math.PI / 2))
+                .style("fill", color(d.framework))
+                .style("fill-opacity", 0.8)
+                .on("mouseover", function(event, data) {
+                    tooltip
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 25) + "px")
+                        .style("opacity", 1)
+                        .html(`<strong>${d.framework}</strong><br>${data.axis}: ${data.value}`);
+                })
+                .on("mouseout", function() {
+                    tooltip.style("opacity", 0);
+                });
+        });
+
+        // 添加图例
+        const legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("transform", `translate(${width / 2}, ${height - margin.bottom / 2})`);
+
+        legend.selectAll("rect")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("x", (d, i) => i * 100 - 100)
+            .attr("y", -10)
+            .attr("width", 15)
+            .attr("height", 15)
+            .style("fill", d => color(d.framework));
+
+        legend.selectAll("text")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("x", (d, i) => i * 100 - 88)
+            .attr("y", 10)
+            .attr("dy", "0.35em")
+            .text(d => d.framework);
+
+        // 添加标题
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", margin.top / 2)
+            .attr("text-anchor", "middle")
+            .style("font-size", "20px")
+            .style("font-weight", "bold")
+            .text("深度学习框架比较");
+
+    </script>
+</body>
+</html>

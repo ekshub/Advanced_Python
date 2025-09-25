@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>模块依赖程度热图</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        .heatmap text {
+            font-size: 12px;
+        }
+        .link {
+            fill: none;
+            stroke-width: 2px;
+        }
+        .node {
+            fill: steelblue;
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+        .endpoint {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+        .label {
+            text-anchor: end;
+            alignment-baseline: middle;
+            font-size: 12px;
+        }
+        .top-label {
+            text-anchor: middle;
+            alignment-baseline: middle;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>PyTorch 模块依赖程度热图</h2>
+<div id="pytorch-heatmap"></div>
+
+<h2>MindSpore 模块依赖程度热图</h2>
+<div id="mindspore-heatmap"></div>
+
+<!-- 引入 D3.js 库 -->
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script>
+
+// PyTorch 模块依赖程度数据
+const pytorchModules = ["前向传播", "模型架构", "数据加载", "动态图", "静态图", "反向传播", "超参数"];
+
+const pytorchData = [
+    [null, 0.7, 0.85, 0.2, 0.9, 0.6, 0.8],
+    [null, null, 0.6, 0.8, 0.3, 0.75, 0.5],
+    [null, null, null, 0.5, 0.4, 0.1, 0.5],
+    [null, null, null, null, 0.6, 0.85, 0.1],
+    [null, null, null, null, null, 0.2, 0.25],
+    [null, null, null, null, null, null, 0.65],
+    [null, null, null, null, null, null, null],
+];
+
+// MindSpore 模块依赖程度数据
+const mindsporeModules = ["前向传播", "模型架构", "数据加载", "动态图", "静态图", "反向传播", "超参数", "TrainCell"];
+
+const mindsporeData = [
+    [null, 0.95, 0.75, 0.9, 0.8, 0.9, 0.7, 0.85],
+    [null, null, 0.9, 0.7, 0.85, 0.7, 0.8, 0.6],
+    [null, null, null, 0.75, 0.6, 0.65, 0.5, 0.6],
+    [null, null, null, null, 0.9, 0.7, 0.85, 0.4],
+    [null, null, null, null, null, 0.85, 0.6, 0.75],
+    [null, null, null, null, null, null, 0.9, 0.75],
+    [null, null, null, null, null, null, null, 0.8],
+    [null, null, null, null, null, null, null, null],
+];
+
+// 分类映射
+const moduleCategoryMap = {
+    "模型架构": "模型设计",
+    "数据加载": "数据准备",
+    "前向传播": "训练阶段",
+    "反向传播": "训练阶段",
+    "超参数": "训练阶段",
+    "TrainCell": "训练阶段",
+    "动态图": "计算图构建",
+    "静态图": "计算图构建"
+};
+
+// 类别颜色映射
+const categoryColors = {
+    "模型设计": "steelblue",
+    "数据准备": "green",
+    "训练阶段": "orange",
+    "计算图构建": "purple"
+};
+
+// 生成热图的函数
+function createHeatmap(modules, data, containerId) {
+    const margin = {top: 80, right: 100, bottom: 50, left: 100},
+          cellSize = 40,
+          width = modules.length * cellSize,
+          height = modules.length * cellSize;
+
+    const svg = d3.select(containerId)
+        .append("svg")
+        .attr("width", width + margin.left + margin.right + 200)
+        .attr("height", height + margin.top + margin.bottom);
+
+    const g = svg.append("g")
+        .attr("class", "heatmap")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // 定义颜色比例尺
+    const colorScale = d3.scaleSequential(d3.interpolateYlGnBu)
+        .domain([0, 1]);
+
+    // 定义方块大小比例尺
+    const sizeScale = d3.scaleLinear()
+        .domain([0, 1])
+        .range([5, cellSize - 10]);
+
+    // 绘制热力图的方块
+    for (let i = 0; i < modules.length; i++) {
+        for (let j = i; j < modules.length; j++) {
+            if (data[i][j] !== null && data[i][j] !== undefined) {
+                // 绘制固定大小的外框 (透明背景)
+                g.append("rect")
+                    .attr("x", (j - i) * cellSize)
+                    .attr("y", i * cellSize)
+                    .attr("width", cellSize)
+                    .attr("height", cellSize)
+                    .attr("fill", "none")
+                    .attr("stroke", "#ccc");
+
+                // 绘制表示分数的内方块
+                g.append("rect")
+                    .attr("x", (j - i) * cellSize + (cellSize - sizeScale(data[i][j])) / 2)
+                    .attr("y", i * cellSize + (cellSize - sizeScale(data[i][j])) / 2)
+                    .attr("width", sizeScale(data[i][j]))
+                    .attr("height", sizeScale(data[i][j]))
+                    .attr("fill", colorScale(data[i][j]));
+            }
+        }
+    }
+
+    // 添加左侧的行标签
+    g.selectAll(".rowLabel")
+        .data(modules)
+        .enter()
+        .append("text")
+        .text(function(d) { return d; })
+        .attr("x", -10)
+        .attr("y", function(d, i) { return i * cellSize + cellSize / 2 + 4; })
+        .style("text-anchor", "end")
+        .attr("class", "label");
+
+// 添加顶部的列标签（旋转展示，处于同一行）
+g.selectAll(".colLabel")
+    .data(modules.slice().reverse())
+    .enter()
+    .append("text")
+    .text(function(d) { return d; })
+    .attr("x", function(d, i) { return i * cellSize + cellSize / 2+20; })  // 水平位置
+    .attr("y", 20)  // 设置y坐标为-20（确保标签处于同一行）
+    .style("text-anchor", "middle")  // 水平居中对齐
+    .attr("transform", function(d, i) {
+        return "rotate(-90 " + (i * cellSize + cellSize / 2) + ", -20)";  // 旋转90度，基于标签的中心位置
+    })
+    .attr("class", "top-label");
+
+
+
+    // 绘制右侧的节点和曲线连接
+    const nodes = [];
+
+    for (let i = 0; i < modules.length; i++) {
+        const numCells = modules.length - i;
+        const x = (numCells - 1) * cellSize;
+        const nodeX = x + cellSize + 20; // 假设后面还有一个方格
+        const moduleName = modules[i];
+        const category = moduleCategoryMap[moduleName];
+        nodes.push({name: moduleName, category: category, x: nodeX, y: i * cellSize + cellSize / 2});
+    }
+
+    // 定义终点
+    const categories = ["模型设计", "数据准备", "训练阶段", "计算图构建"];
+    const numCategories = categories.length;
+    const endpointX = width + margin.right - 100;
+    const endpointYStart = height - 200;
+    const endpointSpacing = 50;
+
+    const endpoints = [];
+    for(let i = 0; i < numCategories; i++) {
+        endpoints.push({
+            category: categories[i],
+            x: endpointX,
+            y: endpointYStart + i * endpointSpacing
+        });
+    }
+
+    // 绘制终点和标签
+    g.selectAll(".endpoint")
+        .data(endpoints)
+        .enter()
+        .append("circle")
+        .attr("class", "endpoint")
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; })
+        .attr("r", 5)
+        .attr("fill", function(d) { return categoryColors[d.category]; });
+
+    g.selectAll(".endpoint-label")
+        .data(endpoints)
+        .enter()
+        .append("text")
+        .attr("x", function(d) { return d.x + 10; })
+        .attr("y", function(d) { return d.y + 5; })
+        .text(function(d) { return d.category; })
+        .attr("class", "label")
+        .style("text-anchor", "start");
+
+    // 绘制起点节点
+    g.selectAll(".node-start")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("class", "node")
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; })
+        .attr("r", 5)
+        .attr("fill", function(d){ return categoryColors[d.category]; });
+
+    // 绘制曲线连接
+    nodes.forEach(function(node) {
+        const category = node.category;
+        const endpoint = endpoints.find(e => e.category === category);
+        const color = categoryColors[category];
+        g.append("path")
+            .attr("class", "link")
+            .attr("d", function() {
+                return "M" + node.x + "," + node.y
+                    + "C" + (node.x + 50) + "," + node.y
+                    + " " + (endpoint.x - 50) + "," + endpoint.y
+                    + " " + endpoint.x + "," + endpoint.y;
+            })
+            .attr("stroke", color)
+            .attr("stroke-width", 2)
+            .attr("fill", "none");
+    });
+
+    // 缩小色卡图例尺寸，右移，并只绘制首尾刻度
+    const legendWidth = 10;
+    const legendHeight = 100;
+
+    const legendScale = d3.scaleLinear()
+        .domain([0, 1])
+        .range([legendHeight, 0]);
+
+    const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", "translate(" + (width + margin.left + 80) + "," + margin.top + ")");
+
+    // 创建渐变
+    const defs = svg.append("defs");
+
+    const linearGradientId = "linear-gradient-" + containerId.replace('#','');
+
+    const linearGradient = defs.append("linearGradient")
+        .attr("id", linearGradientId)
+        .attr("x1", "0%")
+        .attr("y1", "100%")
+        .attr("x2", "0%")
+        .attr("y2", "0%");
+
+    linearGradient.selectAll("stop")
+        .data([
+            {offset: "0%", color: colorScale(0)},
+            {offset: "100%", color: colorScale(1)}
+        ])
+        .enter().append("stop")
+        .attr("offset", function(d) { return d.offset; })
+        .attr("stop-color", function(d) { return d.color; });
+
+    // 绘制色卡矩形
+    legend.append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", "url(#" + linearGradientId + ")");
+
+    // 添加色卡刻度，只显示首尾刻度
+    legend.append("g")
+        .attr("transform", "translate(" + legendWidth + ",0)")
+        .call(d3.axisRight()
+            .scale(d3.scaleLinear()
+                .domain([1, 0])
+                .range([0, legendHeight])
+            )
+            .ticks(2)
+            .tickValues([1, 0])
+        );
+}
+
+// 创建 PyTorch 热图
+createHeatmap(pytorchModules, pytorchData, "#pytorch-heatmap");
+
+// 创建 MindSpore 热图
+createHeatmap(mindsporeModules, mindsporeData, "#mindspore-heatmap");
+
+</script>
+
+</body>
+</html>
